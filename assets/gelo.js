@@ -32,13 +32,16 @@
   });
   // roles
   (() => {
-    const sp = $$('#roles span'); if (!sp.length) return; let k = 0; sp[0].classList.add('in');
+    const box = $('#roles'), sp = $$('#roles span'); if (!sp.length) return; let k = 0;
+    const fit = el => { box.style.width = el.offsetWidth + 'px'; };
+    sp[0].classList.add('in'); requestAnimationFrame(() => fit(sp[0]));
+    document.fonts && document.fonts.ready.then(() => fit(sp[k]));
     setInterval(() => {
       if (document.hidden || idx !== 0) return;
       const a = sp[k]; k = (k + 1) % sp.length; const b = sp[k];
-      a.classList.remove('in'); a.classList.add('out'); b.classList.remove('out'); b.classList.add('in');
-      setTimeout(() => a.classList.remove('out'), 650);
-    }, 1600);
+      b.classList.add('reset'); b.classList.remove('out', 'in'); void b.offsetWidth; b.classList.remove('reset');
+      a.classList.remove('in'); a.classList.add('out'); b.classList.add('in'); fit(b);
+    }, 1900);
   })();
 
   // rail
@@ -273,42 +276,50 @@
     HOOKS.c7 = { start() { clearTimeout(tm); order = cards.map((_, k) => k); lay(); auto(); }, stop() { clearTimeout(tm); } };
   })();
 
-  /* 08: cover – mosaik setzt sich zusammen + lupe */
+  /* 08: cover – 3D-wand mit zoom + tiefenunschärfe */
   (() => {
-    const mo = $('#mosaic'); if (!mo) return;
-    const lens = $('#lens'), CX = 8, CY = 5, Z = 2.6;
-    mo.style.setProperty('--cx', CX); mo.style.setProperty('--cy', CY);
-    const frag = document.createDocumentFragment();
-    for (let y = 0; y < CY; y++) for (let x = 0; x < CX; x++) {
-      const t = document.createElement('i'); t.className = 't';
-      t.style.backgroundPosition = `${x / (CX - 1) * 100}% ${y / (CY - 1) * 100}%`;
-      const dist = Math.hypot(x - CX / 2, y - CY / 2);
-      t.style.setProperty('--d', (dist * 70 + Math.random() * 160) + 'ms');
-      t.style.setProperty('--dx', ((x - CX / 2) * 22 + (Math.random() - .5) * 60) + 'px');
-      t.style.setProperty('--dy', ((y - CY / 2) * 22 + (Math.random() - .5) * 60) + 'px');
-      t.style.setProperty('--r', ((Math.random() - .5) * 24) + 'deg');
-      frag.appendChild(t);
+    const wall = $('#cwall'), inn = $('#cwIn'); if (!wall) return;
+    const C = ['group','chain','ongbak','melodien','ub2025','wasmach','dollar','jerseys','cominghome','guns','look','latina','presskit1','bornsinner','impala','car','bomba','monopoly','figure','prada','herz','summer','chandal','bene','breaksong','hs','logo3d'];
+    const mob = matchMedia('(max-width:900px)').matches, NC = mob ? 3 : 5, PER = Math.ceil(C.length / NC) + 1;
+    const order = C.map((c, i) => C[(i * 7) % C.length]);
+    let n = 0;
+    for (let ci = 0; ci < NC; ci++) {
+      const col = document.createElement('div'); col.className = 'cw-col' + (ci % 2 ? ' rev' : '');
+      col.style.setProperty('--t', (70 + ci * 9) + 's');
+      let html = '';
+      for (let r = 0; r < PER; r++) html += `<figure class="ctile"><img src="assets/c/${order[n++ % order.length]}.webp" alt="" loading="lazy" decoding="async" draggable="false"></figure>`;
+      col.innerHTML = html + html; inn.appendChild(col);
     }
-    mo.insertBefore(frag, lens);
-    let hover = false, raf = 0, t0 = 0, px = 0, py = 0;
-    const place = (x, y) => {
-      const r = mo.getBoundingClientRect(), L = lens.offsetWidth;
-      x = clamp(x, 0, r.width); y = clamp(y, 0, r.height);
-      lens.style.transform = `translate(${x - L / 2}px,${y - L / 2}px)`;
-      lens.style.backgroundSize = `${r.width * Z}px ${r.height * Z}px`;
-      lens.style.backgroundPosition = `${-(x * Z - L / 2)}px ${-(y * Z - L / 2)}px`;
+    const tiles = $$('.ctile', inn);
+    tiles.forEach((t, k) => t.style.setProperty('--k', k % (PER * NC)));
+    const size = () => { const w = wall.clientWidth; inn.style.setProperty('--cw', Math.round(Math.min(200, (w * .74 - (NC - 1) * 18) / NC)) + 'px'); };
+    size(); addEventListener('resize', size);
+    let raf = 0, t0 = 0, hov = 0, px = 0, py = 0;
+    wall.addEventListener('pointermove', e => { const r = wall.getBoundingClientRect(); px = e.clientX - r.left; py = e.clientY - r.top; hov = performance.now(); });
+    wall.addEventListener('pointerleave', () => { hov = 0; });
+    const frame = t => {
+      if (!t0) t0 = t;
+      const r = wall.getBoundingClientRect(), live = hov && t - hov < 2500;
+      let fx, fy;
+      if (live) { fx = px; fy = py; } else { const s = (t - t0) / 1000; fx = r.width * (.55 + .28 * Math.sin(s * .32)); fy = r.height * (.5 + .3 * Math.sin(s * .51 + 1)); }
+      inn.style.setProperty('--mx', (fx / r.width - .5).toFixed(3)); inn.style.setProperty('--my', (fy / r.height - .5).toFixed(3));
+      inn.style.setProperty('--zs', live ? 1.06 : 1);
+      const gx = r.left + fx, gy = r.top + fy, rects = tiles.map(el => el.getBoundingClientRect());
+      let best = -1, bd = 1e9;
+      rects.forEach((q, k) => { const d = Math.hypot(q.left + q.width / 2 - gx, q.top + q.height / 2 - gy); rects[k].d = d; if (d < bd && q.bottom > r.top && q.top < r.bottom) { bd = d; best = k; } });
+      rects.forEach((q, k) => {
+        const el = tiles[k], d = q.d;
+        const b = k === best ? 0 : Math.min(3, Math.round(Math.max(0, d - 170) / 110 * 2) / 2);
+        const z = k === best ? 110 : Math.max(0, Math.round(50 - d / 5));
+        if (el._b !== b) { el._b = b; el.style.setProperty('--b', b); }
+        if (el._z !== z) { el._z = z; el.style.setProperty('--z', z); }
+        const f = k === best; if (el._f !== f) { el._f = f; el.classList.toggle('f', f); }
+      });
+      raf = requestAnimationFrame(frame);
     };
-    const wander = t => {
-      if (!t0) t0 = t; const s = (t - t0) / 1000, r = mo.getBoundingClientRect();
-      if (!hover) place(r.width * (.5 + .36 * Math.sin(s * .45)), r.height * (.5 + .32 * Math.sin(s * .71 + 1)));
-      raf = requestAnimationFrame(wander);
-    };
-    mo.addEventListener('pointermove', e => { const r = mo.getBoundingClientRect(); hover = true; px = e.clientX - r.left; py = e.clientY - r.top; place(px, py); });
-    mo.addEventListener('pointerleave', () => { hover = false; });
-    let tm = 0;
     HOOKS.c8 = {
-      start() { clearTimeout(tm); tm = setTimeout(() => { lens.classList.add('show'); t0 = 0; if (!RM) raf = requestAnimationFrame(wander); else place(mo.clientWidth / 2, mo.clientHeight / 2); }, RM ? 0 : 2600); },
-      stop() { clearTimeout(tm); cancelAnimationFrame(raf); lens.classList.remove('show'); }
+      start() { cancelAnimationFrame(raf); t0 = 0; if (!RM) raf = requestAnimationFrame(frame); },
+      stop() { cancelAnimationFrame(raf); }
     };
   })();
 
