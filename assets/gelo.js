@@ -1,4 +1,4 @@
-/* gelo.uniquebaby.de v3 – one scroll = one chapter, with the animated details */
+/* gelo.uniquebaby.de v4 – one scroll = one chapter, with the animated details */
 (() => {
   'use strict';
   const $ = (s, r = document) => r.querySelector(s);
@@ -11,7 +11,7 @@
   let idx = -1, busy = false;
 
   // view-only media
-  document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('video,img,.player,.yt,.nle,.vf-card')) e.preventDefault(); });
+  document.addEventListener('contextmenu', e => { if (e.target.closest && e.target.closest('video,img,.player,.nle,.vf-card,.mosaic,.deck')) e.preventDefault(); });
   document.addEventListener('dragstart', e => { if (e.target.closest && e.target.closest('img,video')) e.preventDefault(); });
 
   chs.forEach((ch, i) => {
@@ -125,24 +125,6 @@
   addEventListener('hashchange', () => { const i = chs.findIndex(c => '#' + c.id === location.hash); if (i >= 0) go(i); });
 
   /* ---------- media ---------- */
-  function ytMount(box) {
-    if (box._if || RM) return;
-    const id = box.dataset.yt, st = box.dataset.start || 0;
-    const f = document.createElement('iframe');
-    f.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&controls=0&loop=1&playlist=${id}&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&start=${st}&enablejsapi=1&origin=${encodeURIComponent(location.origin)}`;
-    f.title = 'Hintergrundvideo'; f.tabIndex = -1; f.setAttribute('aria-hidden', 'true'); f.allow = 'autoplay; encrypted-media';
-    f.addEventListener('load', () => {
-      const ping = () => { try { f.contentWindow.postMessage(JSON.stringify({ event: 'listening', id, channel: 'widget' }), '*'); } catch (e) {} };
-      ping(); box._ping = setInterval(ping, 600); setTimeout(() => clearInterval(box._ping), 9000);
-    });
-    box.appendChild(f); box._if = f;
-  }
-  addEventListener('message', e => {
-    if (!/youtube/.test(e.origin)) return;
-    let d; try { d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; } catch (err) { return; }
-    if (!d || !d.info || d.info.playerState !== 1) return;
-    $$('.yt').forEach(b => { if (b._if && b._if.contentWindow === e.source) { clearInterval(b._ping); setTimeout(() => b.classList.add('live'), 250); } });
-  });
   const HOOKS = {};
   function media(n) {
     chs.forEach((c, i) => {
@@ -151,7 +133,6 @@
         if (on) { v.preload = 'auto'; try { v.currentTime = 0; } catch (e) {} if (!RM) v.play().catch(() => {}); }
         else setTimeout(() => { if (idx !== i) v.pause(); }, DUR);
       });
-      if (on || Math.abs(i - n) === 1) $$('.yt', c).forEach(ytMount);
       $$('iframe[data-src]', c).forEach(f => { if (Math.abs(i - n) <= 1) { f.src = f.dataset.src; f.removeAttribute('data-src'); } });
       if (on && !c._counted) { c._counted = true; $$('[data-count]', c).forEach(countUp); }
       const h = HOOKS[c.id]; if (h) on ? h.start() : setTimeout(() => { if (idx !== i) h.stop(); }, DUR);
@@ -246,23 +227,103 @@
     HOOKS.c4 = { start() { tm.forEach(clearTimeout); set(0); tm = [[2600, 1], [4600, 2], [5200, 3]].map(([d, i]) => setTimeout(() => set(i), RM ? 0 : d)); }, stop() { tm.forEach(clearTimeout); } };
   })();
 
-  /* branding wall */
+  /* 06: musikvideos – reel mit auto-spotlight */
   (() => {
-    const pick = {
-      p: ['i/post-brand_nicht-wie-ihr.webp', 'i/post-musik_omah-lay.webp', 'i/post-universum.webp', 'i/post-studios.webp', 'i/post-ub-lab.webp', 'i/post-merch.webp'],
-      s: ['sp/antisocial.webp', 'sp/keinplan.webp', 'sp/blickkontakt.webp', 'sp/ami-paris.webp', 'sp/normal-hoodtrap.webp', 'sp/auf-street.webp', 'sp/16.webp', 'sp/nml.webp', 'sp/2many.webp', 'sp/lostvalentine.webp', 'sp/omah-lay.webp', 'sp/unreal.webp'],
-      y: ['yt/-P8gzIYTQVg.webp', 'yt/Fqftex3O-Eg.webp', 'yt/a3qt13N1za4.webp', 'yt/FyR6i-aJ7Rs.webp', 'yt/LmmWumcNIWA.webp', 'yt/XgBeY5RNKBE.webp', 'yt/4LotSmYx3uM.webp', 'yt/mo-Xa15N2Oo.webp', 'yt/zD-hqN62FNs.webp', 'yt/qI-qVAYC6Xk.webp', 'yt/PrNs7qBuZ5w.webp'],
-      b: ['p/br-lemonjuice.webp', 'p/br-07tv.webp', 'p/br-zelavi.webp', 'p/3d-kopfschmerzen.webp', 'p/3d-faberge.webp', 'p/3d-bonustrack.webp', 'i/kv-lab-ringe.webp', 'i/ub3d-glitch.webp']
+    const reel = $('#reel'); if (!reel) return;
+    const figs = $$('figure', reel), cr = $$('#credits li'), bar = $('.reel-bar', reel), CYC = 4200;
+    let act = 0, tm = 0;
+    reel.style.setProperty('--cyc', CYC + 'ms');
+    figs.forEach((f, k) => f.style.setProperty('--k', k));
+    const lay = () => {
+      figs.forEach((f, k) => {
+        const p = (k - act + figs.length) % figs.length; f.dataset.p = p;
+        const v = $('video', f);
+        if (v) { if (p === 0 && idx === 6 && !RM) { v.preload = 'auto'; v.play().catch(() => {}); } else if (p !== 0) v.pause(); }
+      });
+      cr.forEach((l, k) => l.classList.toggle('hot', k === act));
+      bar.classList.remove('run'); void bar.offsetWidth; bar.classList.add('run');
     };
-    const cols = [['p', 'y', 's', 'b', 'y', 's'], ['s', 'b', 'y', 'p', 's', 'y'], ['y', 's', 'p', 'y', 'b', 's'], ['b', 'y', 's', 'p', 'y', 'b'], ['s', 'p', 'y', 's', 'b', 'y']];
-    const cnt = { p: 0, s: 3, y: 0, b: 0 };
-    const wall = $('#wall'), inner = document.createElement('div'); inner.className = 'wall-in';
-    cols.forEach((list, ci) => {
-      const col = document.createElement('div'); col.className = 'col' + (ci % 2 ? ' rev' : ''); col.style.setProperty('--t', (34 + ci * 7) + 's');
-      const html = list.map(key => { const a = pick[key][cnt[key]++ % pick[key].length]; return `<div class="tile"><img src="assets/${a}" alt="" loading="lazy" decoding="async" draggable="false"></div>`; }).join('');
-      col.innerHTML = html + html; inner.appendChild(col);
+    lay();
+    const step = () => { act = (act + 1) % figs.length; lay(); tm = setTimeout(step, CYC); };
+    HOOKS.c6 = { start() { clearTimeout(tm); act = 0; lay(); tm = setTimeout(step, CYC); }, stop() { clearTimeout(tm); bar.classList.remove('run'); } };
+  })();
+
+  /* 07: branding – kartendeck */
+  (() => {
+    const deck = $('#deck'); if (!deck) return;
+    const cards = $$('figure', deck), li = $$('#blist li'), n = cards.length;
+    const num = document.createElement('span'); num.className = 'deck-n'; deck.appendChild(num);
+    let order = cards.map((_, k) => k), tm = 0, lock = false;
+    const lay = () => {
+      order.forEach((c, p) => { const el = cards[c]; el.style.setProperty('--p', p); el.style.zIndex = n - p; el.classList.toggle('front', p === 0); });
+      li.forEach((l, k) => l.classList.toggle('hot', k === order[0]));
+      num.textContent = `${String(order[0] + 1).padStart(2, '0')} / ${String(n).padStart(2, '0')}`;
+    };
+    const next = () => {
+      if (lock) return; lock = true;
+      const top = cards[order[0]]; top.classList.add('throw');
+      setTimeout(() => {
+        order.push(order.shift()); top.style.transition = 'none'; top.classList.remove('throw'); lay();
+        void top.offsetWidth; top.style.transition = ''; lock = false;
+      }, RM ? 0 : 560);
+    };
+    lay();
+    const auto = () => { tm = setTimeout(() => { next(); auto(); }, 3400); };
+    deck.addEventListener('click', () => { clearTimeout(tm); next(); auto(); });
+    HOOKS.c7 = { start() { clearTimeout(tm); order = cards.map((_, k) => k); lay(); auto(); }, stop() { clearTimeout(tm); } };
+  })();
+
+  /* 08: cover – mosaik setzt sich zusammen + lupe */
+  (() => {
+    const mo = $('#mosaic'); if (!mo) return;
+    const lens = $('#lens'), CX = 8, CY = 5, Z = 2.6;
+    mo.style.setProperty('--cx', CX); mo.style.setProperty('--cy', CY);
+    const frag = document.createDocumentFragment();
+    for (let y = 0; y < CY; y++) for (let x = 0; x < CX; x++) {
+      const t = document.createElement('i'); t.className = 't';
+      t.style.backgroundPosition = `${x / (CX - 1) * 100}% ${y / (CY - 1) * 100}%`;
+      const dist = Math.hypot(x - CX / 2, y - CY / 2);
+      t.style.setProperty('--d', (dist * 70 + Math.random() * 160) + 'ms');
+      t.style.setProperty('--dx', ((x - CX / 2) * 22 + (Math.random() - .5) * 60) + 'px');
+      t.style.setProperty('--dy', ((y - CY / 2) * 22 + (Math.random() - .5) * 60) + 'px');
+      t.style.setProperty('--r', ((Math.random() - .5) * 24) + 'deg');
+      frag.appendChild(t);
+    }
+    mo.insertBefore(frag, lens);
+    let hover = false, raf = 0, t0 = 0, px = 0, py = 0;
+    const place = (x, y) => {
+      const r = mo.getBoundingClientRect(), L = lens.offsetWidth;
+      x = clamp(x, 0, r.width); y = clamp(y, 0, r.height);
+      lens.style.transform = `translate(${x - L / 2}px,${y - L / 2}px)`;
+      lens.style.backgroundSize = `${r.width * Z}px ${r.height * Z}px`;
+      lens.style.backgroundPosition = `${-(x * Z - L / 2)}px ${-(y * Z - L / 2)}px`;
+    };
+    const wander = t => {
+      if (!t0) t0 = t; const s = (t - t0) / 1000, r = mo.getBoundingClientRect();
+      if (!hover) place(r.width * (.5 + .36 * Math.sin(s * .45)), r.height * (.5 + .32 * Math.sin(s * .71 + 1)));
+      raf = requestAnimationFrame(wander);
+    };
+    mo.addEventListener('pointermove', e => { const r = mo.getBoundingClientRect(); hover = true; px = e.clientX - r.left; py = e.clientY - r.top; place(px, py); });
+    mo.addEventListener('pointerleave', () => { hover = false; });
+    let tm = 0;
+    HOOKS.c8 = {
+      start() { clearTimeout(tm); tm = setTimeout(() => { lens.classList.add('show'); t0 = 0; if (!RM) raf = requestAnimationFrame(wander); else place(mo.clientWidth / 2, mo.clientHeight / 2); }, RM ? 0 : 2600); },
+      stop() { clearTimeout(tm); cancelAnimationFrame(raf); lens.classList.remove('show'); }
+    };
+  })();
+
+  /* 09: 3D – coverflow */
+  (() => {
+    const ring = $('#ring'); if (!ring) return;
+    const figs = $$('figure', ring), n = figs.length;
+    let k = 0, tm = 0;
+    const show = () => figs.forEach((f, i) => {
+      let p = ((i - k) % n + n) % n; if (p > n / 2) p -= n;
+      f.style.setProperty('--p', p); f.style.zIndex = 10 - Math.abs(p) * 2; f.classList.toggle('front', p === 0);
     });
-    wall.appendChild(inner);
+    show();
+    const step = () => { k++; show(); tm = setTimeout(step, 3600); };
+    HOOKS.c9 = { start() { clearTimeout(tm); k = 0; show(); tm = setTimeout(step, 3000); }, stop() { clearTimeout(tm); } };
   })();
 
   /* pixelview viewfinder */
@@ -273,7 +334,7 @@
       tc.textContent = ['00', String(Math.floor(s / 60) % 60).padStart(2, '0'), String(Math.floor(s) % 60).padStart(2, '0'), String(f).padStart(2, '0')].join(':');
       meters.forEach((m, k) => m.style.setProperty('--lv', (35 + Math.random() * 45 + Math.sin(t / 220 + k) * 10) + '%'));
     });
-    HOOKS.c7 = { start() { t0 = 0; h.start(); }, stop: h.stop };
+    HOOKS.c5 = { start() { t0 = 0; h.start(); }, stop: h.stop };
   })();
 
   /* ---------- cursor + magnetic buttons ---------- */
@@ -300,7 +361,7 @@
   /* ---------- loader ---------- */
   const ld = $('#ld'), t0 = performance.now(), MIN = RM ? 200 : 1600;
   let ready = false;
-  Promise.all([document.fonts ? document.fonts.ready : 0, new Promise(r => { const im = $('#c0 .poster'); if (im.complete) r(); else im.onload = im.onerror = r; })]).then(() => ready = true);
+  Promise.all([document.fonts ? document.fonts.ready : 0, new Promise(r => { const v = $('#c0 video'); if (!v || v.readyState >= 2) r(); else { v.addEventListener('loadeddata', r, { once: true }); v.addEventListener('error', r, { once: true }); } })]).then(() => ready = true);
   setTimeout(() => ready = true, 4500);
   const startAt = chs.findIndex(c => '#' + c.id === location.hash);
   (function lload(t) {
