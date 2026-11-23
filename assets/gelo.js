@@ -74,9 +74,24 @@
     $('#hudN').textContent = String(n + 1).padStart(2, '0'); $('#hudL').textContent = ch.dataset.t;
     hn.classList.remove('flip'); void hn.offsetWidth; hn.classList.add('flip');
     setYear(ch.dataset.year);
+    document.documentElement.style.setProperty('--pg', ((n + 1) / chs.length * 100).toFixed(1) + '%');
+    const eb = $('.eyebrow', ch); if (eb && !RM) setTimeout(() => scramble(eb), instant ? 0 : 250);
     chs.forEach((c, i) => c._rail.classList.toggle('act', i === n));
     history.replaceState(null, '', n ? '#' + ch.id : location.pathname);
     media(n);
+  }
+
+  // eyebrow text scramble
+  const GL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789·×/';
+  function scramble(el) {
+    const orig = el._orig || (el._orig = el.textContent); const t0 = performance.now(), D = 700;
+    cancelAnimationFrame(el._raf);
+    const step = t => {
+      const k = Math.min(1, (t - t0) / D), n = Math.floor(orig.length * k);
+      el.textContent = orig.slice(0, n) + [...orig.slice(n)].map(c => c === ' ' ? ' ' : GL[Math.random() * GL.length | 0]).join('');
+      if (k < 1) el._raf = requestAnimationFrame(step); else el.textContent = orig;
+    };
+    el._raf = requestAnimationFrame(step);
   }
 
   let lastWheel = 0, acc = 0, quiet = false;
@@ -270,6 +285,11 @@
     (function l() { rx += (mx - rx) * .2; ry += (my - ry) * .2; dot.style.transform = `translate(${mx}px,${my}px)`; ring.style.transform = `translate(${rx}px,${ry}px)`; requestAnimationFrame(l); })();
     document.addEventListener('pointerover', e => { const t = e.target.closest && e.target.closest('[data-cur]'); if (t) { lab.textContent = t.dataset.cur; c.classList.add('big'); } });
     document.addEventListener('pointerout', e => { const t = e.target.closest && e.target.closest('[data-cur]'); if (t && !(e.relatedTarget && t.contains(e.relatedTarget))) c.classList.remove('big'); });
+    $$('.three figure, .vids li, .player, .vf-card, .insta').forEach(el => {
+      el.classList.add('tilt');
+      el.addEventListener('pointermove', e => { const r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5; el.style.transform = `perspective(900px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) translateZ(0)`; });
+      el.addEventListener('pointerleave', () => { el.style.transform = ''; });
+    });
     $$('.btn, .hud-cta').forEach(b => {
       b.addEventListener('pointermove', e => { const r = b.getBoundingClientRect(); b.style.transform = `translate(${(e.clientX - r.left - r.width / 2) * .18}px,${(e.clientY - r.top - r.height / 2) * .25}px)`; });
       b.addEventListener('pointerleave', () => { b.style.transform = ''; });

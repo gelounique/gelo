@@ -432,3 +432,40 @@ figcaption{position:absolute;left:10px;bottom:10px;font-size:12px;font-weight:50
   .selfload{transform:translateX(90vw)}
   .ghost{font-size:44vw}
 }
+
+/* ================= v3.1: more details ================= */
+.vids li,.rel li,.three figure{pointer-events:auto}
+.prog{position:fixed;z-index:61;left:0;right:0;top:0;height:2px;mix-blend-mode:difference;pointer-events:none}
+.prog i{display:block;height:100%;width:var(--pg,0%);background:#fff;transition:width 1s var(--ease)}
+/* ghost year per chapter */
+.ch:not(#c0)::before{content:attr(data-year);position:absolute;right:-.04em;bottom:-.22em;font-size:clamp(150px,28vw,480px);font-weight:700;letter-spacing:-.07em;line-height:1;color:transparent;-webkit-text-stroke:1px var(--line);transform:translateY(14%);opacity:0;transition:transform 2.2s var(--out),opacity 1.2s;pointer-events:none;z-index:0}
+.ch.on:not(#c0)::before{transform:none;opacity:1}
+.ch>div,.ch>canvas{z-index:1}
+/* pixelview lockup */
+.pv-lock{display:inline-flex;align-items:center;gap:14px;padding:12px 18px 12px 16px;border-radius:16px;background:#0b0b0c;margin-bottom:22px;box-shadow:0 18px 40px rgba(0,0,0,.18)}
+.pv-un{height:22px;width:auto;opacity:0;transform:translateX(-24px)}
+.pv-x{font-size:24px;font-weight:300;color:#fff;opacity:0;transform:rotate(-180deg) scale(.3)}
+.pv-p{height:44px;width:auto;opacity:0;transform:translateX(24px) rotate(10deg)}
+.pv-name{font-size:12px;font-weight:600;line-height:1.1;color:#fff;letter-spacing:-.01em;opacity:0;transform:translateX(10px)}
+.on .pv-un{animation:pvIn .8s .35s var(--out) forwards}
+.on .pv-x{animation:pvX .8s .6s var(--out) forwards}
+.on .pv-p{animation:pvIn .9s .75s var(--out) forwards,rec 2.4s 2s ease-in-out infinite}
+.on .pv-name{animation:pvIn .7s 1s var(--out) forwards}
+@keyframes pvIn{to{opacity:1;transform:none}}
+@keyframes pvX{to{opacity:1;transform:none}}
+@keyframes rec{0%,100%{filter:drop-shadow(0 0 0 rgba(255,0,0,0))}50%{filter:drop-shadow(0 0 10px rgba(255,40,40,.8))}}
+.mv .cta{margin-top:22px}
+/* hover: tilt + glitch */
+.tilt{transition:transform .25s var(--out)}
+.vids li img{transition:transform .4s var(--out)}
+.vids li:hover img{transform:scale(1.05);animation:rgbx .35s steps(2) 2}
+@keyframes rgbx{0%{filter:drop-shadow(3px 0 0 rgba(255,0,60,.7)) drop-shadow(-3px 0 0 rgba(0,200,255,.7))}100%{filter:none}}
+.rel li:hover img{transform:translateY(-4px) rotate(-2deg) scale(1.06);transition:transform .3s var(--out)}
+/* eyebrow scramble cursor */
+.eyebrow .sc{opacity:.55}
+@media (max-width:900px){.pv-lock{padding:9px 12px;gap:10px;margin-bottom:14px}.pv-p{height:32px}.pv-un{height:16px}.ch:not(#c0)::before{font-size:46vw}}
+@media (max-width:900px){
+  .mv .cta .tl,.pv-name{display:none}
+  .vids li.soon,.vids li:nth-child(3){display:none}
+  .mv{gap:16px!important}
+}
