@@ -203,7 +203,7 @@ figcaption{position:absolute;left:10px;bottom:10px;font-size:12px;font-weight:50
   .vids li:nth-child(n+5):not(.soon){display:none}
 }
 @media (max-width:900px){
-  .ch>div:not(.bg):not(.shade):not(.hero):not(.cue):not(.hero-meta):not(.flash){padding-top:calc(env(safe-area-inset-top,0px) + 78px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 54px)}
+  .ch>div:not(.bg):not(.shade):not(.hero):not(.cue):not(.hero-meta):not(.flash){padding-top:calc(env(safe-area-inset-top,0px) + 88px);padding-bottom:calc(env(safe-area-inset-bottom,0px) + 62px)}
   .split,.cut,.music,.jobs,.mares,.out,.brand{grid-template-columns:1fr;align-content:center;gap:24px}
   h2{font-size:clamp(34px,9.6vw,54px);margin-bottom:16px}
   .lead{font-size:16px}
@@ -618,3 +618,47 @@ figcaption{position:absolute;left:10px;bottom:10px;font-size:12px;font-weight:50
 .lb-x:hover{background:#f4f4f6;color:#050506}
 .lb.ld::after{content:"";position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px;border-radius:50%;border:2px solid rgba(244,244,246,.25);border-top-color:#f4f4f6;animation:lbspin .8s linear infinite}
 @keyframes lbspin{to{transform:rotate(360deg)}}
+
+/* ================= v5: mobile fit (kein Überlappen, nichts unter dem Header) ================= */
+@media (max-width:900px){
+  .ch:not(#c0)::before{display:none}
+  .split,.cut,.music,.jobs,.mares,.out,.brand,.mvx,.brandx,.covx,.threex,.mv,.ub{align-content:safe center;align-items:start;min-height:0}
+  .eyebrow{font-size:12px;line-height:1.35;margin-bottom:10px}
+  h2{margin-bottom:12px}
+  .lead{font-size:15px;line-height:1.45}
+  .stats{gap:26px;margin-top:14px}.stats b{font-size:30px}.stats span{font-size:12px;margin-top:3px}
+  .pl-screen{aspect-ratio:auto;height:clamp(120px,24svh,210px)}
+  .pl-top,.pl-bar{padding:7px 12px}
+  .nle .mon{height:clamp(110px,20svh,190px)}
+  .mares-logo{width:clamp(130px,34vw,190px);margin-bottom:12px}
+}
+@media (max-width:900px) and (max-height:760px){
+  .lead{font-size:14px;line-height:1.4}
+  h2{font-size:clamp(30px,8.6vw,44px)}
+}
+@media (max-width:900px){
+  .covx{align-content:start}
+  .cwall{top:50%!important}
+  .reel{aspect-ratio:2.1;width:100%}
+  .rel{width:min(100%,max(210px,calc((100svh - 470px)*1.25)))}
+  #c6 .credits li{padding:5px 0}
+  .mvfoot{margin-top:12px}
+}
+@media (max-width:900px) and (max-height:700px){
+  .eyebrow{margin-bottom:8px}
+  .lead{font-size:13.5px}
+  .stats{display:none}
+  .mares-logo{width:120px;margin-bottom:8px}
+  #c6 .lead{display:none}
+}
+@media (max-width:900px) and (max-height:780px){ .insta{display:none} }
+@media (max-width:900px) and (max-height:700px){
+  .nle .mon{height:16svh}
+  .stage{height:33svh}
+  .vids img,.vids .soon i{aspect-ratio:2/1}
+}
+@media (min-width:901px) and (max-height:860px){
+  .mvx h2{font-size:clamp(38px,7.2vh,64px)}
+  #c6 .credits li{padding:5px 0}
+  .mvfoot{margin-top:10px}
+}
