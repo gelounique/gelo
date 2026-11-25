@@ -383,3 +383,23 @@
     requestAnimationFrame(lload);
   })(t0);
 })();
+
+/* KARAMELL: ganzes Video im Lightbox-Player (Video liegt in 3 Teilen, wird im Browser zusammengesetzt) */
+(() => {
+  const lb = document.getElementById('lb'), v = document.getElementById('lbV'), btn = document.getElementById('mvPlay'), x = document.getElementById('lbX');
+  if (!lb || !v || !btn) return;
+  let ready = null;
+  const load = () => ready || (ready = Promise.all(v.dataset.parts.split(',').map(u => fetch(u).then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); }).then(b => b.slice(64))))
+    .then(bufs => { v.src = URL.createObjectURL(new Blob(bufs, { type: 'video/mp4' })); }).catch(() => { ready = null; v.src = ''; lb.classList.remove('ld'); }));
+  const open = () => {
+    lb.hidden = false; document.documentElement.classList.add('lb-open');
+    if (v.src) { v.play().catch(() => {}); return; }
+    lb.classList.add('ld');
+    load().then(() => { lb.classList.remove('ld'); if (!lb.hidden && v.src) v.play().catch(() => {}); });
+  };
+  const close = () => { v.pause(); lb.hidden = true; document.documentElement.classList.remove('lb-open'); };
+  btn.addEventListener('click', open); x.addEventListener('click', close);
+  lb.addEventListener('click', e => { if (e.target === lb) close(); });
+  ['wheel', 'touchmove', 'keydown'].forEach(t => lb.addEventListener(t, e => { if (t === 'keydown' && e.key === 'Escape') close(); e.stopPropagation(); }, { passive: true }));
+  document.addEventListener('keydown', e => { if (!lb.hidden && e.key === 'Escape') close(); }, true);
+})();
