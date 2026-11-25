@@ -136,6 +136,7 @@
   /* ---------- Umschalter (Footer) ---------- */
   var CSS = '.ub-lang{position:relative;display:inline-flex;align-items:center;flex:none;margin-left:18px;vertical-align:middle;align-self:center;font:500 13px/1 "Instrument Sans",system-ui,sans-serif;color:#f4f4f6;z-index:60;-webkit-font-smoothing:antialiased;text-transform:none;letter-spacing:0}' +
     '.ub-lang.ub-top{position:fixed;top:14px;margin:0;z-index:9990}.ub-lang.ub-top .ub-lang-btn{box-shadow:inset 0 0 0 1px rgba(255,255,255,.55);border-color:transparent;background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}.ub-lang.ub-top .ub-lang-btn:hover,.ub-lang.ub-top.open .ub-lang-btn{border-color:#f4f4f6}' +
+    '.ub-lang.ub-top.ub-onlight .ub-lang-btn{box-shadow:inset 0 0 0 1px rgba(5,5,6,.6);color:#050506}.ub-lang.ub-top.ub-onlight .ub-lang-btn:hover,.ub-lang.ub-top.ub-onlight.open .ub-lang-btn{background:#050506;color:#f4f4f6;border-color:transparent}' +
     '.ub-lang.ub-fixed{position:fixed;right:16px;bottom:16px;margin:0;z-index:9990}' +
     '.ub-lang *{box-sizing:border-box}' +
     '.ub-lang-btn{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:8px;height:var(--ubh,32px);padding:0 11px 0 9px;border-radius:10px;background:rgba(15,15,18,.6);color:#f4f4f6;border:1px solid rgba(244,244,246,.22);font:inherit;font-weight:500;cursor:pointer;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:background .25s,color .25s,border-color .25s}' +
@@ -167,6 +168,8 @@
       w.classList.add('ub-top'); D.body.appendChild(w);
       var pos = function () { var r = topSel.getBoundingClientRect(); w.style.setProperty('--ubh', Math.round(r.height) + 'px'); w.style.top = Math.round(r.top) + 'px'; w.style.right = Math.max(8, D.documentElement.clientWidth - r.left + 12) + 'px'; };
       pos(); W.addEventListener('resize', pos); W.addEventListener('load', pos);
+      var th = function () { w.classList.toggle('ub-onlight', !!D.querySelector('.ch.now.light')); }; th();
+      if (W.MutationObserver) { var tmo = new MutationObserver(th); [].forEach.call(D.querySelectorAll('.ch'), function (c) { tmo.observe(c, { attributes: true, attributeFilter: ['class'] }); }); }
       if (D.fonts && D.fonts.ready) D.fonts.ready.then(pos);
     } else {
       var anchor = D.querySelector('a[href*="impressum"]'), host = null;
